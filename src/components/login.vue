@@ -1,15 +1,13 @@
 <template>
-  <div id="app">
 
-  </div>
 </template>
 
 <script>
   export default {
-    name: 'app'
+    name: 'login'
   }
 </script>
 
-<style>
+<style lang = "less" scoped>
 
 </style>
