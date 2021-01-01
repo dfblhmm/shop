@@ -9,6 +9,11 @@ import './assets/css/base.css'
 
 // 配置请求根路径
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
+axios.interceptors.request.use(config => {
+  // 给请求头添加token
+  config.headers.Authorization = window.sessionStorage.getItem('token')
+  return config // 返回配置信息
+})
 Vue.prototype.$http = axios
 
 Vue.use(ElementUI)
