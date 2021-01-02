@@ -8,9 +8,6 @@ body,
 img {
   vertical-align: middle;
 }
-.el-menu-item-group__title {
-  background-color: red;
-}
 .el-breadcrumb {
   margin-bottom: 15px;
 }
@@ -19,4 +16,8 @@ img {
 }
 .el-container {
   overflow: hidden;
+}
+/* 表格单元格 */
+.cell {
+  text-align: center;
 }

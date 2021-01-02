@@ -23,12 +23,12 @@
       </el-row>
       <!-- 用户列表展示 -->
       <el-table :data="userList" style="width: 100%" border>
-        <el-table-column type="index" label="#" style="width: 5%"></el-table-column>
+        <el-table-column type="index" label="#"></el-table-column>
         <el-table-column prop="username" label="姓名"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
         <el-table-column prop="mobile" label="电话"></el-table-column>
         <el-table-column prop="role_name" label="身份"></el-table-column>
-        <el-table-column label="状态" style="width: 10%">
+        <el-table-column label="状态">
           <template slot-scope="scope">
             <el-switch v-model="scope.row.mg_state" @change="statusChange(scope.row)"></el-switch>
           </template>
@@ -40,8 +40,8 @@
             <!-- 删除按钮 -->
             <el-button type="danger" icon="el-icon-delete" circle @click="deleteUser(scope.row.id)"></el-button>
             <!-- 分配权限 -->
-            <el-tooltip effect="dark" content="分配权限" placement="top" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" circle ></el-button>
+            <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
+              <el-button type="warning" icon="el-icon-setting" circle @click="showSetDialog(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -98,6 +98,27 @@
         <el-button type="primary" @click="editUser">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 分配角色对话框 -->
+    <el-dialog title="分配角色" :visible.sync="setDialogVisible" width="40%" @close="resetInfo">
+      <!-- 内容主体区域 -->
+      <div>
+        <p>当前用户：{{roleInfo.username}}</p>
+        <p>当前角色：{{roleInfo.role_name}}</p>
+        <p>
+          分配新角色：
+          <el-select v-model="chooseRoleId" placeholder="请选择角色">
+            <el-option v-for="item in roleList" :key="item.id" :value="item.id" :label="item.roleName">
+            </el-option>
+          </el-select>
+        </p>
+      </div>
+      <!-- 对话框底部 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="setRole">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -131,6 +152,8 @@
         addDialogVisible: false,
         // 控制修改用户对话框显示/隐藏
         editDialogVisible: false,
+        // 控制分配角色对话框显示/隐藏
+        setDialogVisible: false,
         // 添加用户表单数据
         addForm: {
           username: '',
@@ -140,6 +163,12 @@
         },
         // 查询到的用户信息
         editForm: {},
+        // 获取到的所有角色列表
+        roleList: {},
+        // 当前用户的角色信息
+        roleInfo: {},
+        // 选中的新角色id
+        chooseRoleId: '',
         // 验证规则
         formRules: {
           username: [
@@ -221,7 +250,7 @@
         this.$refs.editFormRef.validate(async valid => {
           // 表单预验证不通过
           if (!valid) return
-          // 发起网络请求，添加新用户
+          // 发起网络请求，更新用户信息
           const { data: result } = await this.$http.put(`users/${this.editForm.id}`, {
             email: this.editForm.email,
             mobile: this.editForm.mobile
@@ -250,6 +279,27 @@
         this.$message.success('删除用户成功')
         // 更新用户列表
         this.getUserList()
+      },
+      async showSetDialog(role) {
+        this.setDialogVisible = true
+        this.roleInfo = role
+        const { data: result } = await this.$http.get('roles')
+        if (result.meta.status !== 200) return this.$message.error('获取角色列表失败')
+        this.roleList = result.data
+      },
+      // 分配角色
+      async setRole() {
+        if (!this.chooseRoleId) return this.$message.error('请选择角色')
+        const { data: result } = await this.$http.put(`users/${this.roleInfo.id}/role`, { rid: this.chooseRoleId })
+        if (result.meta.status !== 200) return this.$message.error('分配角色失败')
+        this.$message.success('分配角色成功')
+        this.setDialogVisible = false
+        this.getUserList()
+      },
+      // 监听分配角色对话框关闭
+      resetInfo() {
+        this.roleInfo = {}
+        this.chooseRoleId = ''
       }
     }
   }
@@ -258,8 +308,5 @@
 <style lang="less" scoped>
   .el-table {
     margin: 15px 0 15px;
-    .el-table-column {
-      width: 16%;
-    }
   }
 </style>
